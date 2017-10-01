@@ -35,7 +35,7 @@ parseNumber :: Parser LispVal
 parseNumber = liftM (Number . read) $ many1 digit
 
 parseExpr :: Parser LispVal
-parseExpr = parseAtom <|> parseString
+parseExpr = parseAtom <|> parseString <|> parseNumber
 
 readExpr :: String -> String
 readExpr input = case parse parseExpr "lisp" input of
