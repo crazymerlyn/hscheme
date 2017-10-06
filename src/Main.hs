@@ -1,5 +1,6 @@
 module Main where
 import Control.Monad
+import Control.Monad.Error
 import System.Environment
 import Text.ParserCombinators.Parsec hiding (spaces)
 
@@ -9,6 +10,14 @@ data LispVal = Atom String
              | Number Integer
              | String String
              | Bool Bool
+
+data LispError = NumArgs Integer [LispVal]
+               | TypeMismatch String [LispVal]
+               | Parser ParseError
+               | BadSpecialForm String LispVal
+               | NotFunction String String
+               | UnboundVar String String
+               | Default String
 
 showVal :: LispVal -> String
 showVal (String contents) = "\"" ++ contents ++ "\""
@@ -24,6 +33,19 @@ unwordsList :: [LispVal] -> String
 unwordsList = unwords . map showVal
 
 instance Show LispVal where show = showVal
+
+showError :: LispError -> String
+showError (UnboundVar message varname) = message ++ ": " ++ varname
+showError (BadSpecialForm message form) = message ++ ": " ++ show form
+showError (NotFunction message func) = message ++ ": " ++ show func
+showError (NumArgs expected found) = "Expected: " ++ show expected ++
+                                     " args: found values " ++
+                                     unwordsList found
+showError (TypeMismatch expected found) = "Invalid Type: expected " ++
+                                          expected ++ ", found " ++ show found
+showError (Parser parseError) = "Parser error at " ++ show parseError
+
+instance Show LispError where show = showError
 
 symbol :: Parser Char
 symbol = oneOf "!$%&*+-/:<=?>@^_~#"
